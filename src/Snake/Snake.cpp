@@ -3,11 +3,23 @@
 #include "back.h"
 #include "gameOver.h"
 #include "newGame.h"
+
+#include <esp_now.h>
+#include <WiFi.h>
+
 extern TFT_eSPI tft; 
 extern TFT_eSprite sprite;
 
-#define left 3
-#define right 10
+typedef struct struct_message {
+    int player;
+    int left;
+    int right;
+    int up;
+    int down;
+    int start;
+} struct_message;
+
+struct_message input;
 
 int size=1;
 int y[120]={0};
@@ -44,9 +56,15 @@ void getFood()//.....................getFood -get new position of food
     getFood();
 }
 
+void OnDataRecv(const uint8_t * mac_addr, const uint8_t *incomingData, int len) {
+  Serial.println("data received");
+  char macStr[18];
+  snprintf(macStr, sizeof(macStr), "%02x:%02x:%02x:%02x:%02x:%02x",
+           mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
+  memcpy(&input, incomingData, sizeof(input));
+}
+
 void Snake_setup() {  //.......................setup
-    pinMode(left,INPUT_PULLUP);
-    pinMode(right,INPUT_PULLUP);
     tft.init();
     tft.fillScreen(TFT_BLACK);
     tft.setRotation(0); 
@@ -54,8 +72,13 @@ void Snake_setup() {  //.......................setup
     tft.pushImage(0,0,170,320,back);
     tft.pushImage(0,30,170,170,newGame);
     
-    
-  
+    Serial.begin(9600);
+    WiFi.mode(WIFI_STA);
+    if (esp_now_init() != ESP_OK) {
+      Serial.println("Error initializing ESP-NOW");
+      return;
+    }
+    esp_now_register_recv_cb(esp_now_recv_cb_t(OnDataRecv));
   
     tft.setTextColor(TFT_PURPLE,0x7DFD);
     tft.fillSmoothCircle(28,102+(howHard*24),5,TFT_RED,TFT_BLACK); 
@@ -64,9 +87,9 @@ void Snake_setup() {  //.......................setup
     sprite.createSprite(170,170);
     sprite.setSwapBytes(true);
 
-    while(digitalRead(right)==1)
+    while(input.right==1)
          {
-           if(digitalRead(left)==0)
+           if(input.left==0)
            {
              if(deb2==0)
                {
@@ -155,7 +178,7 @@ if(millis()>readyTime+100 && ready==0)
 {ready=1;} 
 
 if(ready==1){
-if(digitalRead(left)==0){
+if(input.left==0){
 
   
   if(deb==0)
@@ -171,7 +194,7 @@ if(digitalRead(left)==0){
 }else{ deb=0;}}
 
 if(ready==1){
-if(digitalRead(right)==0)
+if(input.right==0)
 {
    
   if(deb2==0)
