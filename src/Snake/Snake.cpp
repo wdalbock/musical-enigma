@@ -7,8 +7,11 @@
 #include <esp_now.h>
 #include <WiFi.h>
 
-extern TFT_eSPI tft; 
-extern TFT_eSprite sprite;
+// extern TFT_eSPI tft; 
+// extern TFT_eSprite sprite;
+
+TFT_eSPI tft = TFT_eSPI();
+TFT_eSprite sprite = TFT_eSprite(&tft);
 
 typedef struct struct_message {
     int player;
