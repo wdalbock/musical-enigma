@@ -1,17 +1,30 @@
 #include <TFT_eSPI.h>
 #include "Snake.h"
-#include "back.h"
-#include "gameOver.h"
-#include "newGame.h"
+// #include "back.h"
+// #include "gameOver.h"
+// #include "newGame.h"
+
+#include "ESP32S3VGA.h"
+#include "GfxWrapper.h"
+#include "Adafruit_ImageReader.h"
 
 #include <esp_now.h>
 #include <WiFi.h>
 
-// extern TFT_eSPI tft; 
-// extern TFT_eSprite sprite;
+extern VGA vga;
+extern Mode mode;
+extern int width;
+extern int height;
+extern GfxWrapper<VGA> gfx(vga, mode.hRes, mode.vRes);
 
-TFT_eSPI tft = TFT_eSPI();
-TFT_eSprite sprite = TFT_eSprite(&tft);
+// ----------------------------vga images-------------------------------------
+
+Adafruit_Image img;
+ImageReturnCode stat;
+FatFileSystem filesys;
+Adafruit_ImageReader reader(filesys);
+
+// ---------------------------------------------------------------------------
 
 typedef struct struct_message {
     int left;
@@ -62,12 +75,17 @@ void getFood()//.....................getFood -get new position of food
 extern void OnDataRecv(const uint8_t * mac_addr, const uint8_t *incomingData, int len);
 
 void Snake_setup() {  //.......................setup
-    tft.init();
-    tft.fillScreen(TFT_BLACK);
-    tft.setRotation(0); 
-    tft.setSwapBytes(true);
-    tft.pushImage(0,0,170,320,back);
-    tft.pushImage(0,30,170,170,newGame);
+    // tft.init();
+    // tft.fillScreen(TFT_BLACK);
+    // tft.setRotation(0);
+    // tft.setSwapBytes(true);
+    // tft.pushImage(0,0,170,320,back);
+    // tft.pushImage(0,30,170,170,newGame);
+
+    vga.clear(vga.rgb(0, 0, 0));
+    stat = reader.loadBMP("/back.bmp", img);
+    img.draw(gfx, 40, 20);
+
   
     tft.setTextColor(TFT_PURPLE,0x7DFD);
     tft.fillSmoothCircle(28,102+(howHard*24),5,TFT_RED,TFT_BLACK); 
@@ -126,8 +144,13 @@ void run()//...............................run function
      x[0]=x[0]+dirX;
      y[0]=y[0]+dirY;
 
-    if(x[0]==foodX && y[0]==foodY)
-             {size++; getFood(); tft.drawString(String(size),44,250); period=period-1; tft.drawString(String(500-period),124,250);}
+    if(x[0]==foodX && y[0]==foodY) {
+      size++; 
+      getFood(); 
+      tft.drawString(String(size),44,250); 
+      period=period-1; 
+      tft.drawString(String(500-period),124,250);
+    }
      
      sprite.fillSprite(TFT_BLACK);
      /*
