@@ -24,9 +24,9 @@ typedef struct struct_message {
 
 struct_message input;
 
-int size=1;
-int y[120]={0};
-int x[120]={0};
+static int size=1;
+static int y[120]={0};
+static int x[120]={0};
 
 unsigned long currentTime=0;
 int period=200;

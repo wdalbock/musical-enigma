@@ -1,7 +1,7 @@
-#include <TFT_eSPI.h>
 #include "../Space_wars/space_wars.h"
-#include "fonts/pixel.h"
+#include "../Connect_Four/Connect_Four.h"
 #include "../Snake/Snake.h"
+
 #include "ESP32S3VGA.h"
 #include "GfxWrapper.h"
 
@@ -11,7 +11,7 @@
 //                   r,  r, r, r,r,   g, g, g, g, g,g,   b, b, b, b,b,  h, v
 const PinConfig pins(-1,-1,-1,-1,1,  -1,-1,-1,-1,-1,2,  -1,-1,-1,-1,3,  10,11);
 
-const char*games[] = {"Space Wars", "Snake"}; 
+const char*games[] = {"Space Wars", "Snake", "Connect"}; 
 int currentGameIndex = 0; 
 int totalGames = sizeof(games)/ sizeof(games[0]);
 
@@ -111,6 +111,8 @@ void loop() {
         }
         else if (currentGameIndex == 1) { 
             SnakeMain(); 
+        } else if (currentGameIndex == 2) {
+            ConnectFourMain();
         }
     }
 }
