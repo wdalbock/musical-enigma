@@ -5,8 +5,8 @@
 #include "ESP32S3VGA.h"
 #include "GfxWrapper.h"
 
-#define Pin_Button_Next 0
-#define Pin_Button_Select 14
+#include <esp_now.h>
+#include <WiFi.h>
 
 //                   r,  r, r, r,r,   g, g, g, g, g,g,   b, b, b, b,b,  h, v
 const PinConfig pins(-1,-1,-1,-1,1,  -1,-1,-1,-1,-1,2,  -1,-1,-1,-1,3,  10,11);
@@ -20,6 +20,17 @@ Mode mode = Mode::MODE_640x480x60;
 int width = 640;
 int height = 480;
 GfxWrapper<VGA> gfx(vga, mode.hRes, mode.vRes);
+
+typedef struct struct_message {
+    int left;
+    int right;
+    int up;
+    int down;
+    int start;
+    int back;
+} struct_message;
+
+static struct_message input;
 
 enum State {
     MENU, 
@@ -66,6 +77,14 @@ void loadingAnimation(int x, int y, int w, int h) {
     }
 }
 
+void OnDataRecv(const uint8_t * mac_addr, const uint8_t *incomingData, int len) {
+  Serial.println("data received");
+  char macStr[18];
+  snprintf(macStr, sizeof(macStr), "%02x:%02x:%02x:%02x:%02x:%02x",
+           mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
+  memcpy(&input, incomingData, sizeof(input));
+}
+
 void setup() {
     vga.bufferCount = 2;
 	if(!vga.init(pins, mode, 8)) {
@@ -75,29 +94,44 @@ void setup() {
     }
 	vga.start();
 
-    pinMode(Pin_Button_Next, INPUT_PULLUP); 
-    pinMode(Pin_Button_Select, INPUT_PULLUP); 
+    Serial.begin(9600);
+    WiFi.mode(WIFI_STA);
+    if (esp_now_init() != ESP_OK) {
+      Serial.println("Error initializing ESP-NOW");
+      return;
+    }
+    esp_now_register_recv_cb(esp_now_recv_cb_t(OnDataRecv));
 }
 
 void loop() {
     if (currentState == MENU) {
-        static int prevNextState = HIGH;
-        static int prevButSel = HIGH;
-        int currentNextState = digitalRead(Pin_Button_Next);
-        int currentButState = digitalRead(Pin_Button_Select);
+        static int prevNextState = LOW;
+        static int prevBackState = LOW;
+        static int prevSelState = LOW;
+        int currentNextState = input.down;
+        int currentBackState = input.back;
+        int currentSelState = input.start;
 
+        if (currentBackState == HIGH && currentBackState != prevBackState) {
+            if (currentGameIndex == 0) {
+                currentGameIndex = totalGames - 1;
+            } else {
+                currentGameIndex -= 1;
+            }
+        }
 
-        if (currentNextState == LOW && currentNextState != prevNextState) {
+        if (currentNextState == HIGH && currentNextState != prevNextState) {
             currentGameIndex = (currentGameIndex + 1) % totalGames; 
         }
 
-        if (currentButState == LOW && currentButState != prevButSel) {
+        if (currentSelState == HIGH && currentSelState != prevSelState) {
             currentState = LOADING;
         }
 
         showMainMenu();
         prevNextState = currentNextState;
-        prevButSel = currentButState;
+        prevBackState = currentBackState;
+        prevSelState = currentSelState;
 
     } else if (currentState == LOADING) {
         currentState = PLAYING;

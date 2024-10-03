@@ -14,15 +14,15 @@ TFT_eSPI tft = TFT_eSPI();
 TFT_eSprite sprite = TFT_eSprite(&tft);
 
 typedef struct struct_message {
-    int player;
     int left;
     int right;
     int up;
     int down;
     int start;
+    int back;
 } struct_message;
 
-struct_message input;
+static struct_message input;
 
 static int size=1;
 static int y[120]={0};
@@ -59,13 +59,7 @@ void getFood()//.....................getFood -get new position of food
     getFood();
 }
 
-void OnDataRecv(const uint8_t * mac_addr, const uint8_t *incomingData, int len) {
-  Serial.println("data received");
-  char macStr[18];
-  snprintf(macStr, sizeof(macStr), "%02x:%02x:%02x:%02x:%02x:%02x",
-           mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
-  memcpy(&input, incomingData, sizeof(input));
-}
+extern void OnDataRecv(const uint8_t * mac_addr, const uint8_t *incomingData, int len);
 
 void Snake_setup() {  //.......................setup
     tft.init();
