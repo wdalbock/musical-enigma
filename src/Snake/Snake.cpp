@@ -68,14 +68,6 @@ void Snake_setup() {  //.......................setup
     tft.setSwapBytes(true);
     tft.pushImage(0,0,170,320,back);
     tft.pushImage(0,30,170,170,newGame);
-    
-    Serial.begin(9600);
-    WiFi.mode(WIFI_STA);
-    if (esp_now_init() != ESP_OK) {
-      Serial.println("Error initializing ESP-NOW");
-      return;
-    }
-    esp_now_register_recv_cb(esp_now_recv_cb_t(OnDataRecv));
   
     tft.setTextColor(TFT_PURPLE,0x7DFD);
     tft.fillSmoothCircle(28,102+(howHard*24),5,TFT_RED,TFT_BLACK); 
