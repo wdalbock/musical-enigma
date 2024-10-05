@@ -1,12 +1,11 @@
 #include <TFT_eSPI.h>
 #include "Snake.h"
-// #include "back.h"
-// #include "gameOver.h"
-// #include "newGame.h"
+#include "back.h"
+#include "gameOver.h"
+#include "newGame.h"
 
 #include "ESP32S3VGA.h"
 #include "GfxWrapper.h"
-#include "Adafruit_ImageReader.h"
 
 #include <esp_now.h>
 #include <WiFi.h>
@@ -15,16 +14,9 @@ extern VGA vga;
 extern Mode mode;
 extern int width;
 extern int height;
-extern GfxWrapper<VGA> gfx(vga, mode.hRes, mode.vRes);
+extern GfxWrapper<VGA> gfx;
 
-// ----------------------------vga images-------------------------------------
-
-Adafruit_Image img;
-ImageReturnCode stat;
-FatFileSystem filesys;
-Adafruit_ImageReader reader(filesys);
-
-// ---------------------------------------------------------------------------
+//TFT_eSPI tft;
 
 typedef struct struct_message {
     int left;
@@ -47,12 +39,10 @@ int deb,deb2=0;
 int dirX=1;
 int dirY=0;
 bool taken=0;
-unsigned short colors[2]={0x48ED,0x590F}; //terain colors
 unsigned short snakeColor[2]={0x9FD3,0x38C9};
 bool chosen=0;
 bool gOver=0;
 int moves=0;
-int playTime=0;
 int foodX=0;
 int foodY=0;
 int howHard=0;
@@ -75,52 +65,36 @@ void getFood()//.....................getFood -get new position of food
 extern void OnDataRecv(const uint8_t * mac_addr, const uint8_t *incomingData, int len);
 
 void Snake_setup() {  //.......................setup
-    // tft.init();
-    // tft.fillScreen(TFT_BLACK);
-    // tft.setRotation(0);
-    // tft.setSwapBytes(true);
-    // tft.pushImage(0,0,170,320,back);
-    // tft.pushImage(0,30,170,170,newGame);
-
     vga.clear(vga.rgb(0, 0, 0));
-    stat = reader.loadBMP("/back.bmp", img);
-    img.draw(gfx, 40, 20);
+    gfx.drawRGBBitmap(width / 2 - 85, height / 2 - 160, back, 170, 320);  
+    gfx.drawRGBBitmap(width / 2 - 85, height / 2 - 130, newGame, 170, 170);
 
-  
-    tft.setTextColor(TFT_PURPLE,0x7DFD);
-    tft.fillSmoothCircle(28,102+(howHard*24),5,TFT_RED,TFT_BLACK); 
-    tft.drawString("DIFFICULTY:   "+ diff[howHard]+"   ",26,267); 
-   
-    sprite.createSprite(170,170);
-    sprite.setSwapBytes(true);
+    gfx.fillCircle(width / 2 - 65, height / 2 - 57 + (howHard * 24), 5, 0xFFFF);  // Fill a circle to indicate difficulty level
+    vga.show(); 
 
-    while(input.right==1)
-         {
-           if(input.left==0)
-           {
-             if(deb2==0)
-               {
-               deb2=1; 
-               tft.fillCircle(28,102+(howHard*24),6,TFT_BLACK);   
-               howHard++;   if(howHard==3) howHard=0;  
-               tft.fillSmoothCircle(28,102+(howHard*24),5,TFT_RED,TFT_BLACK);
-               tft.drawString("DIFFICULTY:   "+ diff[howHard]+"   ",26,267);  
-               period=200-howHard*20;  
-               delay(200); 
-               }             
+    while(digitalRead(0) == 1) {
+        if (digitalRead(14) == 0) {
+            if (deb2 == 0) {
+                deb2 = 1;
+                gfx.drawRGBBitmap(width / 2 - 85, height / 2 - 160, back, 170, 320);
+                gfx.drawRGBBitmap(width / 2 - 85, height / 2 - 130, newGame, 170, 170);
+                gfx.fillCircle(width / 2 - 65, height / 2 - 57 + (howHard * 24), 5, 0x0000);  // Clear the current circle
+                howHard++;
+                if (howHard == 3) howHard = 0;
+                gfx.fillCircle(width / 2 - 65, height / 2 - 57 + (howHard * 24), 5, 0xFFFF);  // Draw new circle for selected difficulty
+                period = 200 - howHard * 20;  
+                vga.show();
+            }
+        } else {
+            deb2 = 0;
+        }
+    }
 
-           }else deb2=0;
-         }
-    
-    y[0]=random(5,15);
-    getFood();
-    tft.setTextSize(3);
-    tft.setTextDatum(4);
-    tft.drawString(String(size),44,250); 
-    tft.drawString(String(500-period),124,250);
+    y[0] = random(5, 15); 
+    getFood(); 
     delay(400);
-    dirX=1;
-    dirY=0;
+    dirX = 1;
+    dirY = 0;
 }
 
 void checkGameOver()//..,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,check game over
@@ -132,51 +106,46 @@ if(x[i]==x[0] && y[i]==y[0])
 gOver=true;
 }
 
-void run()//...............................run function
-{
-
-      for(int i=size;i>0;i--)
-       {
-      x[i]=x[i-1];    
-      y[i]=y[i-1];     
-       }    
-
-     x[0]=x[0]+dirX;
-     y[0]=y[0]+dirY;
-
-    if(x[0]==foodX && y[0]==foodY) {
-      size++; 
-      getFood(); 
-      tft.drawString(String(size),44,250); 
-      period=period-1; 
-      tft.drawString(String(500-period),124,250);
+void run() {
+    for (int i = size; i > 0; i--) {
+        x[i] = x[i - 1];
+        y[i] = y[i - 1];
     }
-     
-     sprite.fillSprite(TFT_BLACK);
-     /*
-    for(int i=0;i<17;i++)
-      for(int j=0;j<17;j++)
-        {
-        sprite.fillRect(j*10,i*10,10,10,colors[chosen]);
-        chosen=!chosen;
+
+    x[0] += dirX;
+    y[0] += dirY;
+
+    vga.clear(vga.rgb(0, 0, 0)); 
+    gfx.drawRGBBitmap(width / 2 - 85, height / 2 - 160, back, 170, 320);
+
+    if (x[0] == foodX && y[0] == foodY) {
+        size++;
+        getFood();
+    }
+
+    gfx.setTextColor(0xf800);
+    gfx.setTextSize(2);
+    gfx.setCursor(width / 2 - 60, height / 2 + 75);
+    gfx.print(size);  // Update snake size display
+    period -= 1;
+    gfx.setCursor(width / 2 + 20, height / 2 + 75);
+    gfx.print(500 - period);  // Update game speed display
+
+    // Draw snake and food
+    checkGameOver();
+    if (!gOver) {
+        gfx.drawRect(width / 2 - 85, height / 2 - 130, 170, 170, 0x02F3);  // Draw game boundary
+        for (int i = 0; i < size; i++) {
+            gfx.fillRoundRect(x[i] * 10 + width / 2 - 85, y[i] * 10 + height / 2 - 130, 10, 10, 2, snakeColor[0]);  // Snake body
+            gfx.fillRoundRect(2 + x[i] * 10 + width / 2 - 85, 2 + y[i] * 10 + height / 2 - 130, 6, 6, 2, snakeColor[1]);  // Snake detail
         }
-     chosen=0;*/
-     checkGameOver();
-      if(gOver==0){
-     sprite.drawRect(0,0,170,170,0x02F3);     
-     for(int i=0;i<size;i++){
-     sprite.fillRoundRect(x[i]*10,y[i]*10,10,10,2,snakeColor[0]); 
-     sprite.fillRoundRect(2+x[i]*10,2+y[i]*10,6,6,2,snakeColor[1]); 
-     }
-     sprite.fillRoundRect(foodX*10+1,foodY*10+1,8,8,1,TFT_RED); 
-     sprite.fillRoundRect(foodX*10+3,foodY*10+3,4,4,1,0xFE18); 
+        gfx.fillRoundRect(foodX * 10 + 1 + width / 2 - 85, foodY * 10 + 1 + height / 2 - 130, 8, 8, 1, 0xF800);  // Draw food
+        gfx.fillRoundRect(foodX * 10 + 3 + width / 2 - 85, foodY * 10 + 3 + height / 2 - 130, 4, 4, 1, 0xFE18);  // Food detail
+    } else {
+        gfx.drawRGBBitmap(width / 2 - 85, height / 2 - 130, gameOver, 170, 170);  // Game over screen
     }
-else    
-
-{sprite.pushImage(0,0,170,170,gameOver);}    
- sprite.pushSprite(0,30);
- 
-}     
+    vga.show();
+}
 
 
 int change=0;
@@ -190,7 +159,7 @@ if(millis()>readyTime+100 && ready==0)
 {ready=1;} 
 
 if(ready==1){
-if(input.left==0){
+if(digitalRead(0)==0){
 
   
   if(deb==0)
@@ -206,7 +175,7 @@ if(input.left==0){
 }else{ deb=0;}}
 
 if(ready==1){
-if(input.right==0)
+if(digitalRead(14)==0)
 {
    
   if(deb2==0)
@@ -225,8 +194,29 @@ if(input.right==0)
 
 void SnakeMain(){
   Snake_setup(); 
-  while(true){
+  while(!gOver){
    Snake_loop(); 
   }
+  // Place logic here to store leaderboard data
 
+  // Reset all variables.
+  size=1;
+  y[120]={0};
+  x[120]={0};
+  currentTime=0;
+  period=200;
+  deb,deb2=0;
+  dirX=1;
+  dirY=0;
+  taken=0;
+  chosen=0;
+  gOver=0;
+  moves=0;
+  foodX=0;
+  foodY=0;
+  howHard=0;
+  ready=1;
+  readyTime=0;
+
+  delay(5000);
 }

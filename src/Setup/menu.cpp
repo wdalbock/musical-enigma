@@ -66,16 +66,15 @@ void showMainMenu() {
     vga.show();
 } 
 
-void loadingAnimation(int x, int y, int w, int h) {
-    float widthFraction = w / 100.0;
-    for (int i = 1; i <= 100; i++) {
-        gfx.drawRect(x, y, w, h, 0xFFFF);
-        vga.clear(vga.rgb(0, 0, 0));
-        gfx.fillRect(x, y, widthFraction * i, h, 0xFFFF);
-        vga.show();
-        delay(2);
-    }
-}
+// void loadingAnimation(int x, int y, int w, int h) {
+//     float widthFraction = w / 100.0;
+//     for (int i = 1; i <= 100; i++) {
+//         gfx.drawRect(x, y, w, h, 0xFFFF);
+//         vga.clear(vga.rgb(0, 0, 0));
+//         gfx.fillRect(x, y, widthFraction * i, h, 0xFFFF);
+//         vga.show();
+//     }
+// }
 
 void OnDataRecv(const uint8_t * mac_addr, const uint8_t *incomingData, int len) {
   Serial.println("data received");
@@ -93,6 +92,11 @@ void setup() {
         }
     }
 	vga.start();
+
+    // temp ----------------------------------------------
+    pinMode(0, INPUT_PULLUP);
+    pinMode(14, INPUT_PULLUP);
+    // ---------------------------------------------------
 
     Serial.begin(9600);
     WiFi.mode(WIFI_STA);
@@ -112,6 +116,11 @@ void loop() {
         int currentBackState = input.back;
         int currentSelState = input.start;
 
+        // temp --------------------------------
+        int d = digitalRead(0);
+        int s = digitalRead(14);
+        // -------------------------------------
+
         if (currentBackState == HIGH && currentBackState != prevBackState) {
             if (currentGameIndex == 0) {
                 currentGameIndex = totalGames - 1;
@@ -120,11 +129,11 @@ void loop() {
             }
         }
 
-        if (currentNextState == HIGH && currentNextState != prevNextState) {
+        if (currentNextState == HIGH && currentNextState != prevNextState || d == 0) {
             currentGameIndex = (currentGameIndex + 1) % totalGames; 
         }
 
-        if (currentSelState == HIGH && currentSelState != prevSelState) {
+        if (currentSelState == HIGH && currentSelState != prevSelState || s == 0) {
             currentState = LOADING;
         }
 
@@ -135,18 +144,21 @@ void loop() {
 
     } else if (currentState == LOADING) {
         currentState = PLAYING;
-        loadingAnimation(35, 240, 520, 30);
+        // loadingAnimation(35, 240, 520, 30);
         vga.clear(vga.rgb(0, 0, 0));
         vga.show();
 
     } else if (currentState == PLAYING) {
         if (currentGameIndex == 0) {
-            space_warsMain(); 
+            space_warsMain();
+            currentState = MENU;
         }
         else if (currentGameIndex == 1) { 
-            SnakeMain(); 
+            SnakeMain();
+            currentState = MENU;
         } else if (currentGameIndex == 2) {
             ConnectFourMain();
+            currentState = MENU;
         }
     }
 }
