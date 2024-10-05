@@ -72,8 +72,8 @@ void drawIndicator() {
 }
  
 void drawPlayer() {
-  tft.fillRect(270, 135, 140, 98, bg);  // Clear the area
-  tft.setCursor(270, 135);
+  tft.fillRect(225, 135, 140, 98, bg);  // Clear the area
+  tft.setCursor(225, 135);
  
   tft.setTextSize(4);
   if (player == 1) {
@@ -88,15 +88,15 @@ void drawPlayer() {
 void displayStartScreen() {
   tft.setTextSize(2.5);
   tft.setTextColor(fg);
-  tft.drawString("Connect", 10, 70);
+  tft.drawString("Connect", 50, 70);
   tft.setTextSize(5);
   tft.setTextColor(rg);
-  tft.drawString("4", 100, 55);
+  tft.drawString("4", 125, 80);
   tft.setTextSize(1);
   tft.setTextColor(fg);
-  tft.drawString("Made by group 24", 10, 95);
+  tft.drawString("Made by group 24", 50, 95);
   tft.setTextSize(3);
-  tft.drawString("Player:", 145, 140);
+  tft.drawString("Player:", 160, 150);
   drawBoard();
   drawPlayer();
   displayScore();
