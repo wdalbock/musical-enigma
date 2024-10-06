@@ -16,8 +16,6 @@ extern int width;
 extern int height;
 extern GfxWrapper<VGA> gfx;
 
-//TFT_eSPI tft;
-
 typedef struct struct_message {
     int left;
     int right;

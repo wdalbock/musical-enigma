@@ -11,7 +11,7 @@
 //                   r,  r, r, r,r,   g, g, g, g, g,g,   b, b, b, b,b,  h, v
 const PinConfig pins(-1,-1,-1,-1,1,  -1,-1,-1,-1,-1,2,  -1,-1,-1,-1,3,  10,11);
 
-const char*games[] = {"Space Wars", "Snake", "Connect"}; 
+const char*games[] = {"Space Wars", "Snake", "Connect Four"}; 
 int currentGameIndex = 0; 
 int totalGames = sizeof(games)/ sizeof(games[0]);
 
