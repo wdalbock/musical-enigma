@@ -7,8 +7,8 @@
 #include "rocketH.h"
 #include "start.h"
 
-extern TFT_eSPI tft; 
-extern TFT_eSprite sprite;
+TFT_eSPI tft = TFT_eSPI();
+TFT_eSprite sprite = TFT_eSprite(&tft);
 
 
 TFT_eSprite player = TFT_eSprite(&tft);
