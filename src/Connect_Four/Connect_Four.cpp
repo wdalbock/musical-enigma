@@ -262,6 +262,7 @@ void ConnectFourLoop() {
       // Check if the board is full, in which case it's a draw
       else if (isBoardFull()) {
         displayDrawMessage();
+        vga.show();
         delay(3000);
         resetGame();  // Reset game after a draw
       } else {
@@ -270,7 +271,7 @@ void ConnectFourLoop() {
         drawPlayer();
       }
     } else {
-      delay(1000);  // Pause for a second before letting the player try again
+      delay(100);  // Pause for a second before letting the player try again
     }
   } else if (buttonState.left == 0) {
     delay(100);  // Debounce delay
