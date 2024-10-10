@@ -16,9 +16,9 @@ int currentGameIndex = 0;
 int totalGames = sizeof(games)/ sizeof(games[0]);
 
 VGA vga;
-Mode mode = Mode::MODE_640x480x60;
+Mode mode = Mode::MODE_640x400x70;
 int width = 640;
-int height = 480;
+int height = 400;
 GfxWrapper<VGA> gfx(vga, mode.hRes, mode.vRes);
 
 typedef struct struct_message {
@@ -67,11 +67,11 @@ void showMainMenu() {
 }
 
 void OnDataRecv(const uint8_t * mac_addr, const uint8_t *incomingData, int len) {
-  Serial.println("data received");
   char macStr[18];
   snprintf(macStr, sizeof(macStr), "%02x:%02x:%02x:%02x:%02x:%02x",
            mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
   memcpy(&input, incomingData, sizeof(input));
+  Serial.printf("l: %d, r: %d, u: %d, d: %d, s: %d, b: %d\n", input.left, input.right, input.up, input.down, input.start, input.back);
 }
 
 void setup() {
@@ -131,7 +131,7 @@ void loop() {
 
     } else if (currentState == PLAYING) {
         if (currentGameIndex == 0) {
-            space_warsMain();
+            //space_warsMain();
             currentState = MENU;
         }
         else if (currentGameIndex == 1) { 

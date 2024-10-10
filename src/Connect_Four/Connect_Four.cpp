@@ -36,10 +36,6 @@ bool win = false;
 int scoreA = 0;  // Score for Player A
 int scoreB = 0;  // Score for Player B
  
-const int buttonLeft = input.left;   // Button pin for moving left
-const int buttonRight = input.right;  // Button pin for moving right
-const int buttonSelect = input.start; // Button pin for selecting
- 
 void displayScore() {
   gfx.setTextSize(2);
  
@@ -246,7 +242,7 @@ void ConnectFourLoop() {
   drawIndicator();  // Draw the player’s current selection indicator
   vga.show();
  
-  if (digitalRead(buttonSelect) == LOW) {
+  if (input.start == LOW) {
     delay(100);  // Debounce delay
    
     // Check if the column is full before allowing a piece to be placed
@@ -281,11 +277,11 @@ void ConnectFourLoop() {
     } else {
       delay(1000);  // Pause for a second before letting the player try again
     }
-  } else if (digitalRead(buttonLeft) == LOW) {
+  } else if (input.left == LOW) {
     delay(100);  // Debounce delay
     x -= 18;
     if (x < 150) x = 258;  // Wrap around if moving out of bounds on the left
-  } else if (digitalRead(buttonRight) == LOW) {
+  } else if (input.right == LOW) {
     delay(100);  // Debounce delay
     x += 18;
     if (x > 258) x = 150;  // Wrap around if moving out of bounds on the right
@@ -294,10 +290,6 @@ void ConnectFourLoop() {
 }
 
 void ConnectFourMain() {
-  pinMode(buttonLeft, INPUT_PULLUP);  // Set button pins
-  pinMode(buttonRight, INPUT_PULLUP);
-  pinMode(buttonSelect, INPUT_PULLUP);
-
   while(true) {
     ConnectFourLoop();
   }
