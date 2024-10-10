@@ -1,8 +1,12 @@
 #include <TFT_eSPI.h>  // Include the TFT display library
 #include "Connect_Four.h"
+#include "../Setup/common.h"
 
 #include "ESP32S3VGA.h"
 #include "GfxWrapper.h"
+
+#include <esp_now.h>
+#include <WiFi.h>
 
 extern VGA vga;
 extern Mode mode;
@@ -10,16 +14,7 @@ extern int width;
 extern int height;
 extern GfxWrapper<VGA> gfx;
 
-typedef struct struct_message {
-    int left;
-    int right;
-    int up;
-    int down;
-    int start;
-    int back;
-} struct_message;
-
-static struct_message input;
+extern struct_message buttonState;
 
 extern void OnDataRecv(const uint8_t * mac_addr, const uint8_t *incomingData, int len);
  
@@ -242,7 +237,7 @@ void ConnectFourLoop() {
   drawIndicator();  // Draw the player’s current selection indicator
   vga.show();
  
-  if (input.start == LOW) {
+  if (buttonState.start == 0) {
     delay(100);  // Debounce delay
    
     // Check if the column is full before allowing a piece to be placed
@@ -277,11 +272,11 @@ void ConnectFourLoop() {
     } else {
       delay(1000);  // Pause for a second before letting the player try again
     }
-  } else if (input.left == LOW) {
+  } else if (buttonState.left == 0) {
     delay(100);  // Debounce delay
     x -= 18;
     if (x < 150) x = 258;  // Wrap around if moving out of bounds on the left
-  } else if (input.right == LOW) {
+  } else if (buttonState.right == 0) {
     delay(100);  // Debounce delay
     x += 18;
     if (x > 258) x = 150;  // Wrap around if moving out of bounds on the right
@@ -290,6 +285,7 @@ void ConnectFourLoop() {
 }
 
 void ConnectFourMain() {
+  delay(1000);
   while(true) {
     ConnectFourLoop();
   }

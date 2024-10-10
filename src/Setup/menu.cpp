@@ -1,6 +1,7 @@
 #include "../Space_wars/space_wars.h"
 #include "../Connect_Four/Connect_Four.h"
 #include "../Snake/Snake.h"
+#include "common.h"
 
 #include "ESP32S3VGA.h"
 #include "GfxWrapper.h"
@@ -21,16 +22,7 @@ int width = 640;
 int height = 400;
 GfxWrapper<VGA> gfx(vga, mode.hRes, mode.vRes);
 
-typedef struct struct_message {
-    int left;
-    int right;
-    int up;
-    int down;
-    int start;
-    int back;
-} struct_message;
-
-static struct_message input;
+struct_message buttonState;
 
 enum State {
     MENU, 
@@ -70,8 +62,8 @@ void OnDataRecv(const uint8_t * mac_addr, const uint8_t *incomingData, int len) 
   char macStr[18];
   snprintf(macStr, sizeof(macStr), "%02x:%02x:%02x:%02x:%02x:%02x",
            mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
-  memcpy(&input, incomingData, sizeof(input));
-  Serial.printf("l: %d, r: %d, u: %d, d: %d, s: %d, b: %d\n", input.left, input.right, input.up, input.down, input.start, input.back);
+  memcpy(&buttonState, incomingData, sizeof(buttonState));
+  Serial.printf("l: %d, r: %d, u: %d, d: %d, s: %d, b: %d\n", buttonState.left, buttonState.right, buttonState.up, buttonState.down, buttonState.start, buttonState.back);
 }
 
 void setup() {
@@ -99,9 +91,9 @@ void loop() {
         static int prevNextState = 1;
         static int prevBackState = 1;
         static int prevSelState = 1;
-        int currentNextState = input.down;
-        int currentBackState = input.up;
-        int currentSelState = input.start;
+        int currentNextState = buttonState.down;
+        int currentBackState = buttonState.up;
+        int currentSelState = buttonState.start;
 
         if (currentBackState == 0 && currentBackState != prevBackState) {
             if (currentGameIndex == 0) {
