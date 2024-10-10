@@ -9,6 +9,19 @@ extern Mode mode;
 extern int width;
 extern int height;
 extern GfxWrapper<VGA> gfx;
+
+typedef struct struct_message {
+    int left;
+    int right;
+    int up;
+    int down;
+    int start;
+    int back;
+} struct_message;
+
+static struct_message input;
+
+extern void OnDataRecv(const uint8_t * mac_addr, const uint8_t *incomingData, int len);
  
 uint16_t bg = TFT_BLACK;  // white
 uint16_t fg = TFT_WHITE;  // black
@@ -23,9 +36,9 @@ bool win = false;
 int scoreA = 0;  // Score for Player A
 int scoreB = 0;  // Score for Player B
  
-const int buttonLeft = 0;   // Button pin for moving left
-const int buttonRight = 44;  // Button pin for moving right
-const int buttonSelect = 14; // Button pin for selecting
+const int buttonLeft = input.left;   // Button pin for moving left
+const int buttonRight = input.right;  // Button pin for moving right
+const int buttonSelect = input.start; // Button pin for selecting
  
 void displayScore() {
   gfx.setTextSize(2);
