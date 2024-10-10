@@ -3,13 +3,10 @@
 #include "back.h"
 #include "gameOver.h"
 #include "newGame.h"
-
 #include "../Setup/common.h"
 
 #include "ESP32S3VGA.h"
 #include "GfxWrapper.h"
-
-#include "../Sound/snake_sound.h"
 
 #include <esp_now.h>
 #include <WiFi.h>
@@ -29,8 +26,6 @@ static int y[120]={0};
 static int x[120]={0};
 
 unsigned long currentTime=0;
-unsigned long lastButtonPressTime = 0; // Last time a button was pressed
-unsigned long readyTime = 0; // Last time ready state was checked
 int period=200;
 int deb,deb2=0;
 int dirX=1;
@@ -45,10 +40,7 @@ int foodY=0;
 int howHard=0;
 String diff[3]={"EASY","NORMAL","HARD"};
 bool ready=1;
-
-enum GameState { MENU, GAME };
-GameState snake_currentState = MENU;
-
+long readyTime=0;
 
 void getFood()//.....................getFood -get new position of food
 {
@@ -93,49 +85,15 @@ void Snake_setup() {  //.......................setup
     delay(400);
     dirX = 1;
     dirY = 0;
-    size = 1;
-    dirX = 1;
-    dirY = 0;
-    gOver = 0;  
-    taken = 0;
-    moves = 0;
-    getFood();
-  
-    snakesound_setup();  
-    if (!isPlayingMelody1) {
-        snake_playMelody();  // Play melody part 1 (menu music)
-        isPlayingMelody1 = true;  // Set the flag to indicate melody is playing
-    }
-
-
-    while(snake_currentState==MENU){
-      snakesound_loop(); 
-
-      if(millis() - lastButtonPressTime > 200){
-        if(input.down == 0){
-          tft.fillSmoothCircle(28, 102 + (howHard * 24), 5, TFT_BLACK);
-          howHard = (howHard + 1) % 3;
-          tft.fillSmoothCircle(28, 102 + (howHard * 24), 5, TFT_RED, TFT_BLACK);
-          tft.drawString("DIFFICULTY: " + diff[howHard] + "   ", 26, 267);
-          period = 200 - howHard * 20;
-          lastButtonPressTime = millis();
-        }
-
-        if (input.start == 0) {
-          snake_currentState = GAME;  
-          break;  
-        }
-      }
-    }
 }
 
 void checkGameOver()//..,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,check game over
 {
-  if(x[0]<0 || x[0]>=17 || y[0]<0 || y[0]>=17 )
-    gOver=true;
-  for(int i=1;i<size;i++)
-    if(x[i]==x[0] && y[i]==y[0])
-      gOver=true;
+if(x[0]<0 || x[0]>=17 || y[0]<0 || y[0]>=17 )
+gOver=true;
+for(int i=1;i<size;i++)
+if(x[i]==x[0] && y[i]==y[0])
+gOver=true;
 }
 
 void run() {
@@ -143,7 +101,6 @@ void run() {
         x[i] = x[i - 1];
         y[i] = y[i - 1];
     }
-
 
     x[0] += dirX;
     y[0] += dirY;
@@ -205,6 +162,7 @@ if(buttonState.left==0){
   ready=0;
   readyTime=millis();
   }
+}else{ deb=0;}}
 
 if(ready==1){
 if(buttonState.right==0)
@@ -222,11 +180,6 @@ if(buttonState.right==0)
   }
 }else {deb2=0;}}
 
-void SnakeMain() {
-    Snake_setup(); 
-    while (snake_currentState == GAME) {
-        Snake_loop(); 
-    }
 }
 
 void SnakeMain(){
