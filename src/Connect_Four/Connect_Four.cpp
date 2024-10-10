@@ -118,6 +118,7 @@ void drawPlayer() {
 }
 
 void displayStartScreen() {
+
   gfx.setTextSize(2.5);
   gfx.setTextColor(fg);
   gfx.setCursor(10, 70);
@@ -136,7 +137,6 @@ void displayStartScreen() {
   gfx.setTextSize(3);
   gfx.setCursor(145, 140);
   gfx.print("Player:");
-
   drawBoard();
   drawPlayer();
   displayScore();
