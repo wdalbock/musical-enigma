@@ -70,8 +70,8 @@ void Snake_setup() {  //.......................setup
     gfx.fillCircle(width / 2 - 65, height / 2 - 57 + (howHard * 24), 5, 0xFFFF);  // Fill a circle to indicate difficulty level
     vga.show(); 
 
-    while(input.left == 0) {
-        if (input.right == 1) {
+    while(input.left == 1) {
+        if (input.right == 0) {
             if (deb2 == 0) {
                 deb2 = 1;
                 gfx.drawRGBBitmap(width / 2 - 85, height / 2 - 160, back, 170, 320);
@@ -157,7 +157,7 @@ if(millis()>readyTime+100 && ready==0)
 {ready=1;} 
 
 if(ready==1){
-if(input.left==1){
+if(input.left==0){
 
   
   if(deb==0)
@@ -173,7 +173,7 @@ if(input.left==1){
 }else{ deb=0;}}
 
 if(ready==1){
-if(input.right==1)
+if(input.right==0)
 {
    
   if(deb2==0)
