@@ -1,6 +1,7 @@
 #include "../Space_wars/space_wars.h"
 #include "../Connect_Four/Connect_Four.h"
 #include "../Snake/Snake.h"
+#include "common.h"
 
 #include "ESP32S3VGA.h"
 #include "GfxWrapper.h"
@@ -16,21 +17,12 @@ int currentGameIndex = 0;
 int totalGames = sizeof(games)/ sizeof(games[0]);
 
 VGA vga;
-Mode mode = Mode::MODE_640x480x60;
+Mode mode = Mode::MODE_640x400x70;
 int width = 640;
-int height = 480;
+int height = 400;
 GfxWrapper<VGA> gfx(vga, mode.hRes, mode.vRes);
 
-typedef struct struct_message {
-    int left;
-    int right;
-    int up;
-    int down;
-    int start;
-    int back;
-} struct_message;
-
-static struct_message input;
+struct_message buttonState;
 
 enum State {
     MENU, 
@@ -64,27 +56,18 @@ void showMainMenu() {
         gfx.print(games[i]);
     }
     vga.show();
-} 
-
-// void loadingAnimation(int x, int y, int w, int h) {
-//     float widthFraction = w / 100.0;
-//     for (int i = 1; i <= 100; i++) {
-//         gfx.drawRect(x, y, w, h, 0xFFFF);
-//         vga.clear(vga.rgb(0, 0, 0));
-//         gfx.fillRect(x, y, widthFraction * i, h, 0xFFFF);
-//         vga.show();
-//     }
-// }
+}
 
 void OnDataRecv(const uint8_t * mac_addr, const uint8_t *incomingData, int len) {
-  Serial.println("data received");
   char macStr[18];
   snprintf(macStr, sizeof(macStr), "%02x:%02x:%02x:%02x:%02x:%02x",
            mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
-  memcpy(&input, incomingData, sizeof(input));
+  memcpy(&buttonState, incomingData, sizeof(buttonState));
+  Serial.printf("l: %d, r: %d, u: %d, d: %d, s: %d, b: %d\n", buttonState.left, buttonState.right, buttonState.up, buttonState.down, buttonState.start, buttonState.back);
 }
 
 void setup() {
+    // vga init
     vga.bufferCount = 2;
 	if(!vga.init(pins, mode, 8)) {
         while(1) {
@@ -93,11 +76,7 @@ void setup() {
     }
 	vga.start();
 
-    // temp ----------------------------------------------
-    pinMode(0, INPUT_PULLUP);
-    pinMode(14, INPUT_PULLUP);
-    // ---------------------------------------------------
-
+    // espnow init
     Serial.begin(9600);
     WiFi.mode(WIFI_STA);
     if (esp_now_init() != ESP_OK) {
@@ -109,19 +88,14 @@ void setup() {
 
 void loop() {
     if (currentState == MENU) {
-        static int prevNextState = LOW;
-        static int prevBackState = LOW;
-        static int prevSelState = LOW;
-        int currentNextState = input.down;
-        int currentBackState = input.back;
-        int currentSelState = input.start;
+        static int prevNextState = 1;
+        static int prevBackState = 1;
+        static int prevSelState = 1;
+        int currentNextState = buttonState.down;
+        int currentBackState = buttonState.up;
+        int currentSelState = buttonState.start;
 
-        // temp --------------------------------
-        int d = digitalRead(0);
-        int s = digitalRead(14);
-        // -------------------------------------
-
-        if (currentBackState == HIGH && currentBackState != prevBackState) {
+        if (currentBackState == 0 && currentBackState != prevBackState) {
             if (currentGameIndex == 0) {
                 currentGameIndex = totalGames - 1;
             } else {
@@ -129,11 +103,11 @@ void loop() {
             }
         }
 
-        if (currentNextState == HIGH && currentNextState != prevNextState || d == 0) {
+        if (currentNextState == 0 && currentNextState != prevNextState) {
             currentGameIndex = (currentGameIndex + 1) % totalGames; 
         }
 
-        if (currentSelState == HIGH && currentSelState != prevSelState || s == 0) {
+        if (currentSelState == 0 && currentSelState != prevSelState) {
             currentState = LOADING;
         }
 
@@ -142,9 +116,8 @@ void loop() {
         prevBackState = currentBackState;
         prevSelState = currentSelState;
 
-    } else if (currentState == LOADING) {
+    } else if (currentState == LOADING) { // Used to have a loading bar hence need for this state (it is now not needed but there is no need to change atm).
         currentState = PLAYING;
-        // loadingAnimation(35, 240, 520, 30);
         vga.clear(vga.rgb(0, 0, 0));
         vga.show();
 

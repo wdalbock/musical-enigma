@@ -3,6 +3,7 @@
 #include "back.h"
 #include "gameOver.h"
 #include "newGame.h"
+#include "../Setup/common.h"
 
 #include "ESP32S3VGA.h"
 #include "GfxWrapper.h"
@@ -16,16 +17,9 @@ extern int width;
 extern int height;
 extern GfxWrapper<VGA> gfx;
 
-typedef struct struct_message {
-    int left;
-    int right;
-    int up;
-    int down;
-    int start;
-    int back;
-} struct_message;
+extern struct_message buttonState;
 
-static struct_message input;
+extern void OnDataRecv(const uint8_t * mac_addr, const uint8_t *incomingData, int len);
 
 static int size=1;
 static int y[120]={0};
@@ -60,8 +54,6 @@ void getFood()//.....................getFood -get new position of food
     getFood();
 }
 
-extern void OnDataRecv(const uint8_t * mac_addr, const uint8_t *incomingData, int len);
-
 void Snake_setup() {  //.......................setup
     vga.clear(vga.rgb(0, 0, 0));
     gfx.drawRGBBitmap(width / 2 - 85, height / 2 - 160, back, 170, 320);  
@@ -70,8 +62,8 @@ void Snake_setup() {  //.......................setup
     gfx.fillCircle(width / 2 - 65, height / 2 - 57 + (howHard * 24), 5, 0xFFFF);  // Fill a circle to indicate difficulty level
     vga.show(); 
 
-    while(digitalRead(0) == 1) {
-        if (digitalRead(14) == 0) {
+    while(buttonState.start == 1) {
+        if (buttonState.down == 0) {
             if (deb2 == 0) {
                 deb2 = 1;
                 gfx.drawRGBBitmap(width / 2 - 85, height / 2 - 160, back, 170, 320);
@@ -157,7 +149,7 @@ if(millis()>readyTime+100 && ready==0)
 {ready=1;} 
 
 if(ready==1){
-if(digitalRead(0)==0){
+if(buttonState.left==0){
 
   
   if(deb==0)
@@ -173,7 +165,7 @@ if(digitalRead(0)==0){
 }else{ deb=0;}}
 
 if(ready==1){
-if(digitalRead(14)==0)
+if(buttonState.right==0)
 {
    
   if(deb2==0)

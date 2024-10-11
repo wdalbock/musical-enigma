@@ -1,14 +1,22 @@
 #include <TFT_eSPI.h>  // Include the TFT display library
 #include "Connect_Four.h"
+#include "../Setup/common.h"
 
 #include "ESP32S3VGA.h"
 #include "GfxWrapper.h"
+
+#include <esp_now.h>
+#include <WiFi.h>
 
 extern VGA vga;
 extern Mode mode;
 extern int width;
 extern int height;
 extern GfxWrapper<VGA> gfx;
+
+extern struct_message buttonState;
+
+extern void OnDataRecv(const uint8_t * mac_addr, const uint8_t *incomingData, int len);
  
 uint16_t bg = TFT_BLACK;  // white
 uint16_t fg = TFT_WHITE;  // black
@@ -22,10 +30,6 @@ bool win = false;
  
 int scoreA = 0;  // Score for Player A
 int scoreB = 0;  // Score for Player B
- 
-const int buttonLeft = 0;   // Button pin for moving left
-const int buttonRight = 44;  // Button pin for moving right
-const int buttonSelect = 14; // Button pin for selecting
  
 void displayScore() {
   gfx.setTextSize(2);
@@ -233,7 +237,7 @@ void ConnectFourLoop() {
   drawIndicator();  // Draw the player’s current selection indicator
   vga.show();
  
-  if (digitalRead(buttonSelect) == LOW) {
+  if (buttonState.start == 0) {
     delay(100);  // Debounce delay
    
     // Check if the column is full before allowing a piece to be placed
@@ -258,6 +262,7 @@ void ConnectFourLoop() {
       // Check if the board is full, in which case it's a draw
       else if (isBoardFull()) {
         displayDrawMessage();
+        vga.show();
         delay(3000);
         resetGame();  // Reset game after a draw
       } else {
@@ -266,13 +271,13 @@ void ConnectFourLoop() {
         drawPlayer();
       }
     } else {
-      delay(1000);  // Pause for a second before letting the player try again
+      delay(100);  // Pause for a second before letting the player try again
     }
-  } else if (digitalRead(buttonLeft) == LOW) {
+  } else if (buttonState.left == 0) {
     delay(100);  // Debounce delay
     x -= 18;
     if (x < 150) x = 258;  // Wrap around if moving out of bounds on the left
-  } else if (digitalRead(buttonRight) == LOW) {
+  } else if (buttonState.right == 0) {
     delay(100);  // Debounce delay
     x += 18;
     if (x > 258) x = 150;  // Wrap around if moving out of bounds on the right
@@ -281,10 +286,7 @@ void ConnectFourLoop() {
 }
 
 void ConnectFourMain() {
-  pinMode(buttonLeft, INPUT_PULLUP);  // Set button pins
-  pinMode(buttonRight, INPUT_PULLUP);
-  pinMode(buttonSelect, INPUT_PULLUP);
-
+  delay(1000);
   while(true) {
     ConnectFourLoop();
   }
