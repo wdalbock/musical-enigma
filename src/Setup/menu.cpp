@@ -123,7 +123,7 @@ void loop() {
 
     } else if (currentState == PLAYING) {
         if (currentGameIndex == 0) {
-            space_warsMain();
+            //space_warsMain();
             currentState = MENU;
         }
         else if (currentGameIndex == 1) { 
