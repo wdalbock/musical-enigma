@@ -183,6 +183,7 @@ if(buttonState.right==0)
 }
 
 void SnakeMain(){
+  delay(200);  
   Snake_setup(); 
   while(!gOver){
    Snake_loop(); 
@@ -191,8 +192,8 @@ void SnakeMain(){
 
   // Reset all variables.
   size=1;
-  y[120]={0};
-  x[120]={0};
+  memset(x, '\0', sizeof(x));
+  memset(y, '\0', sizeof(y));
   currentTime=0;
   period=200;
   deb,deb2=0;
@@ -200,7 +201,7 @@ void SnakeMain(){
   dirY=0;
   taken=0;
   chosen=0;
-  gOver=0;
+  gOver=false;
   moves=0;
   foodX=0;
   foodY=0;

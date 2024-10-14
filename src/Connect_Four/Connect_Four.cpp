@@ -1,6 +1,7 @@
 #include <TFT_eSPI.h>  // Include the TFT display library
 #include "Connect_Four.h"
 #include "../Setup/common.h"
+#include "connect_four_sounds.h"
 
 #include "ESP32S3VGA.h"
 #include "GfxWrapper.h"
@@ -229,6 +230,7 @@ void resetGame() {
   player = 1;  // Reset to Player A
   drawPlayer();
   displayScore();  // Display updated scores
+  startSong();
 }
 
 void ConnectFourLoop() {
@@ -236,6 +238,8 @@ void ConnectFourLoop() {
   displayStartScreen();
   drawIndicator();  // Draw the player’s current selection indicator
   vga.show();
+
+  updateSong();
  
   if (buttonState.start == 0) {
     delay(100);  // Debounce delay
@@ -243,6 +247,7 @@ void ConnectFourLoop() {
     // Check if the column is full before allowing a piece to be placed
     if (!isColumnFull(x)) {
       place(player, x);
+      playPlaceSound();
  
       // Check if a player has won
       if (check_if_4()) {
@@ -287,6 +292,7 @@ void ConnectFourLoop() {
 
 void ConnectFourMain() {
   delay(1000);
+  startSong();
   while(true) {
     ConnectFourLoop();
   }
