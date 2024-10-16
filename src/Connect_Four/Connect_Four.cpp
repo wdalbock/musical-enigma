@@ -253,7 +253,7 @@ int ConnectFourLoop() {
   displayMoveCount();
   vga.show();
 
-  updateSong();
+  updateKeyboardCat();
  
   if (currentPlace == 0 && currentPlace != prevPlace) {
   
@@ -309,7 +309,7 @@ int ConnectFourLoop() {
 
 int ConnectFourMain() {
   delay(1000);
-  startSong();
+  startKeyboardCat();
   while(true) {
     if(ConnectFourLoop()) {
       break;
