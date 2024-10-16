@@ -1,13 +1,19 @@
-#include "../Space_wars/space_wars.h"
+//Games
 #include "../Connect_Four/Connect_Four.h"
 #include "../Snake/Snake.h"
+#include "../FourPlayerPong/fourplayerpong.h"
+
 #include "common.h"
 #include "leaderboard.h"
+
+// SD card
 #include <SD_MMC.h>
 
+// VGA 
 #include "ESP32S3VGA.h"
 #include "GfxWrapper.h"
 
+//ESP Now (wireless controller)
 #include <esp_now.h>
 #include <WiFi.h>
 
@@ -23,7 +29,7 @@ static int connectLeaderboard[5];
 //                   r,  r, r, r,r,   g, g, g, g, g,g,   b, b, b, b,b,  h, v
 const PinConfig pins(-1,-1,-1,-1,1,  -1,-1,-1,-1,-1,2,  -1,-1,-1,-1,3,  10,11);
 
-const char* games[] = {"Space Wars", "Snake", "Connect Four"}; 
+const char* games[] = {"Four Player Pong", "Snake", "Connect Four"}; 
 const char* leaderboardMetrics[] = {"", "Size", "Moves to Win"};
 int currentGameIndex = 0; 
 int totalGames = sizeof(games)/ sizeof(games[0]);
@@ -179,6 +185,7 @@ void setup() {
 }
 
 void loop() {
+    delay(10);
     if (currentState == MENU) {
         static int prevNextState = 1;
         static int prevBackState = 1;
@@ -217,7 +224,7 @@ void loop() {
 
     } else if (currentState == PLAYING) {
         if (currentGameIndex == 0) {
-            //space_warsMain();
+            fourplayerpongmain();
             currentState = MENU;
 
         } else if (currentGameIndex == 1) { 
