@@ -2,6 +2,8 @@
 #include "../Connect_Four/Connect_Four.h"
 #include "../Snake/Snake.h"
 #include "common.h"
+#include "leaderboard.h"
+#include <SD_MMC.h>
 
 #include "ESP32S3VGA.h"
 #include "GfxWrapper.h"
@@ -9,10 +11,20 @@
 #include <esp_now.h>
 #include <WiFi.h>
 
+#define PIN_SD_CMD    44
+#define PIN_SD_CLK    18
+#define PIN_SD_D0     17
+
+const char* filenameSnake = "/Snake.txt";
+static int snakeLeaderboard[5];
+const char* filenameConnect = "/ConnectFour.txt";
+static int connectLeaderboard[5];
+
 //                   r,  r, r, r,r,   g, g, g, g, g,g,   b, b, b, b,b,  h, v
 const PinConfig pins(-1,-1,-1,-1,1,  -1,-1,-1,-1,-1,2,  -1,-1,-1,-1,3,  10,11);
 
-const char*games[] = {"Space Wars", "Snake", "Connect Four"}; 
+const char* games[] = {"Space Wars", "Snake", "Connect Four"}; 
+const char* leaderboardMetrics[] = {"", "Size", "Moves to Win"};
 int currentGameIndex = 0; 
 int totalGames = sizeof(games)/ sizeof(games[0]);
 
@@ -26,8 +38,8 @@ struct_message buttonState;
 
 enum State {
     MENU, 
-    LOADING, 
-    PLAYING
+    PLAYING,
+    LEADERBOARD,
 };
 
 State currentState = MENU;
@@ -37,24 +49,93 @@ void showMainMenu() {
     gfx.setTextColor(0xFFFF); // white
 
     gfx.setTextSize(3);  
-    gfx.setCursor(150, 75);
+    gfx.setCursor(50, 75);
     gfx.print("ARCADE MENU"); 
     
     gfx.setTextSize(2); 
 
     for (int i = 0; i < totalGames; i++) {
-        gfx.setCursor(150, 125 + 32 * i);
+        gfx.setCursor(35, 125 + 32 * i);
 
         if (i == currentGameIndex){
             gfx.setTextColor(0xFFE0);
+            gfx.print("(A)");
+
+            gfx.setCursor(350, 125 + 32 * i);
             gfx.print(">>");
+            gfx.setCursor(375, 125 + 32 * i);
+            gfx.print("Leaderboard");
         }
         else {
             gfx.setTextColor(0xFFFF); 
         }
-        gfx.setCursor(175, 125 + 32 * i);
+
+        gfx.setCursor(75, 125 + 32 * i);
         gfx.print(games[i]);
     }
+    vga.show();
+}
+
+void displayLeaderboard(int gameIndex) {
+    const char* metric = leaderboardMetrics[gameIndex];
+    vga.clear(vga.rgb(0, 0, 0));
+
+    gfx.setTextColor(0xFFFF);
+
+    gfx.setCursor(10, 50);
+    gfx.setTextSize(2);  
+    gfx.print(games[gameIndex]);
+
+    gfx.setCursor(420, 50);
+    gfx.print(metric);
+
+    for (int i = 1; i <= 5; i++) {
+        gfx.setCursor(20, 50 + i * 50);
+        gfx.printf("%d", i);
+
+        switch (i) {
+        case 1:
+            gfx.drawRect(15, 45 + i * 50, 500, 40, 0x07E0);
+            break;
+        case 2:
+            gfx.drawRect(15, 45 + i * 50, 500, 40, 0xFFE0);
+            break;
+        case 3:
+            gfx.drawRect(15, 45 + i * 50, 500, 40, 0xF00F);
+            break;
+        default:
+            break;
+        }
+
+        gfx.setCursor(480, 50 + i * 50);
+
+        int snakeval = snakeLeaderboard[i-1];
+        int connectval = connectLeaderboard[i-1];
+        switch (gameIndex) {
+        case 0:
+            break;
+        case 1:
+            if (snakeval == 0) {
+                gfx.print("-");
+            } else {
+                gfx.print(snakeval);
+            }
+            break;
+        case 2:
+            if (connectval == 0) {
+                gfx.print("-");
+            } else {
+                gfx.print(connectval);
+            }
+            break;
+        default:
+            break;
+        }
+    }
+
+    gfx.setTextColor(0xFFE0);
+    gfx.setCursor(0, 370);
+    gfx.print("<- (B)");
     vga.show();
 }
 
@@ -76,8 +157,19 @@ void setup() {
     }
 	vga.start();
 
-    // espnow init
+    //sd card init
+    SD_MMC.setPins(PIN_SD_CLK, PIN_SD_CMD, PIN_SD_D0);
+    SD_MMC.begin("/SDCARD");
     Serial.begin(9600);
+    if (!SD_MMC.begin("/SDCARD", true)) {
+      Serial.println("SD Card Mount Failed");
+      return;
+    }
+
+    readFile(filenameSnake, snakeLeaderboard);
+    readFile(filenameConnect, connectLeaderboard);
+
+    // espnow init
     WiFi.mode(WIFI_STA);
     if (esp_now_init() != ESP_OK) {
       Serial.println("Error initializing ESP-NOW");
@@ -91,9 +183,11 @@ void loop() {
         static int prevNextState = 1;
         static int prevBackState = 1;
         static int prevSelState = 1;
+        static int prevRightState = 1;
         int currentNextState = buttonState.down;
         int currentBackState = buttonState.up;
         int currentSelState = buttonState.start;
+        int currentRightState = buttonState.right;
 
         if (currentBackState == 0 && currentBackState != prevBackState) {
             if (currentGameIndex == 0) {
@@ -108,29 +202,39 @@ void loop() {
         }
 
         if (currentSelState == 0 && currentSelState != prevSelState) {
-            currentState = LOADING;
+            currentState = PLAYING;
+        }
+
+        if (currentRightState == 0 && currentRightState != prevRightState) {
+            currentState = LEADERBOARD;
         }
 
         showMainMenu();
         prevNextState = currentNextState;
         prevBackState = currentBackState;
         prevSelState = currentSelState;
-
-    } else if (currentState == LOADING) { // Used to have a loading bar hence need for this state (it is now not needed but there is no need to change atm).
-        currentState = PLAYING;
-        vga.clear(vga.rgb(0, 0, 0));
-        vga.show();
+        prevRightState = currentRightState;
 
     } else if (currentState == PLAYING) {
         if (currentGameIndex == 0) {
             //space_warsMain();
             currentState = MENU;
-        }
-        else if (currentGameIndex == 1) { 
-            SnakeMain();
+
+        } else if (currentGameIndex == 1) { 
+            addSnakeScore(SnakeMain(), snakeLeaderboard);
+            writeScores(filenameSnake, snakeLeaderboard);
+            delay(10);
             currentState = MENU;
+
         } else if (currentGameIndex == 2) {
-            ConnectFourMain();
+            addConnectFourScore(ConnectFourMain(), connectLeaderboard);
+            writeScores(filenameConnect, connectLeaderboard);
+            delay(10);
+            currentState = MENU;
+        }
+    } else if (currentState == LEADERBOARD) {
+        displayLeaderboard(currentGameIndex);
+        if (!buttonState.back) {
             currentState = MENU;
         }
     }

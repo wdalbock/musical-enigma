@@ -182,13 +182,14 @@ if(buttonState.right==0)
 
 }
 
-void SnakeMain(){
+int SnakeMain(){
   delay(200);  
   Snake_setup(); 
   while(!gOver){
    Snake_loop(); 
   }
   // Place logic here to store leaderboard data
+  int returnVal = size;
 
   // Reset all variables.
   size=1;
@@ -210,4 +211,5 @@ void SnakeMain(){
   readyTime=0;
 
   delay(5000);
+  return returnVal;
 }
