@@ -2,6 +2,6 @@
 #define SNAKE_H
 
 // Declare the main function to start the snake game
-void SnakeMain();
+int SnakeMain();
 
 #endif  // SPACE_WARS_H

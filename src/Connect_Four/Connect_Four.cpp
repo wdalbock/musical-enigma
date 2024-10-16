@@ -28,6 +28,7 @@ static int x = 150;
 int mat[6][7] = {{0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0}};  // Game board
 static int player = 1;  // Player A starts
 bool win = false;
+int moveCount = 0;
  
 int scoreA = 0;  // Score for Player A
 int scoreB = 0;  // Score for Player B
@@ -103,6 +104,12 @@ void drawBoard() {
  
 void drawIndicator() {
   gfx.fillTriangle(x, 4, x + 18, 4, x + 9, 13, TFT_BLUE);  // Draw new indicator
+}
+
+void displayMoveCount() {
+  gfx.setCursor(145, 180);
+  gfx.setTextColor(TFT_WHITE);
+  gfx.printf("Moves: %d", moveCount);
 }
  
 void drawPlayer() {
@@ -230,23 +237,30 @@ void resetGame() {
   player = 1;  // Reset to Player A
   drawPlayer();
   displayScore();  // Display updated scores
-  startSong();
 }
 
-void ConnectFourLoop() {
+int ConnectFourLoop() {
+  static int prevPlace = 1;
+  static int prevMoveLeft = 1;
+  static int prevMoveRight = 1;
+  int currentPlace = buttonState.start;
+  int currentMoveLeft = buttonState.left;
+  int currentMoveRight = buttonState.right;
+
   vga.clear(vga.rgb(0, 0, 0)); 
   displayStartScreen();
   drawIndicator();  // Draw the player’s current selection indicator
+  displayMoveCount();
   vga.show();
 
   updateSong();
  
-  if (buttonState.start == 0) {
-    delay(100);  // Debounce delay
-   
+  if (currentPlace == 0 && currentPlace != prevPlace) {
+  
     // Check if the column is full before allowing a piece to be placed
     if (!isColumnFull(x)) {
       place(player, x);
+      moveCount++;
       playPlaceSound();
  
       // Check if a player has won
@@ -262,6 +276,7 @@ void ConnectFourLoop() {
         }
         delay(3000);
         resetGame();  // Reset game after a win
+        return 1;
       }
      
       // Check if the board is full, in which case it's a draw
@@ -270,30 +285,37 @@ void ConnectFourLoop() {
         vga.show();
         delay(3000);
         resetGame();  // Reset game after a draw
+        return 1;
       } else {
         // Switch players only if a valid move was made and game is not over
         player = (player == 1) ? 2 : 1;
         drawPlayer();
       }
-    } else {
-      delay(100);  // Pause for a second before letting the player try again
     }
-  } else if (buttonState.left == 0) {
-    delay(100);  // Debounce delay
+  } else if (currentMoveLeft == 0 && currentMoveLeft != prevMoveLeft) {
     x -= 18;
     if (x < 150) x = 258;  // Wrap around if moving out of bounds on the left
-  } else if (buttonState.right == 0) {
-    delay(100);  // Debounce delay
+  } else if (currentMoveRight == 0 && currentMoveRight != prevMoveRight) {
     x += 18;
     if (x > 258) x = 150;  // Wrap around if moving out of bounds on the right
   }
-  delay(100);  // Main loop delay
+
+  prevPlace = currentPlace;
+  prevMoveLeft = currentMoveLeft;
+  prevMoveRight = currentMoveRight;
+
+  return 0;
 }
 
-void ConnectFourMain() {
+int ConnectFourMain() {
   delay(1000);
   startSong();
   while(true) {
-    ConnectFourLoop();
+    if(ConnectFourLoop()) {
+      break;
+    }
   }
+  int temp = moveCount;
+  moveCount = 0;
+  return temp;
 }
