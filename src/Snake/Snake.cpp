@@ -4,6 +4,7 @@
 #include "gameOver.h"
 #include "newGame.h"
 #include "../Setup/common.h"
+#include "snake_sounds.h"
 
 #include "ESP32S3VGA.h"
 #include "GfxWrapper.h"
@@ -65,6 +66,7 @@ void Snake_setup() {  //.......................setup
     while(buttonState.start == 1) {
         if (buttonState.down == 0) {
             if (deb2 == 0) {
+                vga.clear(vga.rgb(0, 0, 0));
                 deb2 = 1;
                 gfx.drawRGBBitmap(width / 2 - 85, height / 2 - 160, back, 170, 320);
                 gfx.drawRGBBitmap(width / 2 - 85, height / 2 - 130, newGame, 170, 170);
@@ -141,6 +143,7 @@ void run() {
 int change=0;
 
 void Snake_loop() { //...............................................................loop
+updateFurElise();
   
 if(millis()>currentTime+period) 
 {run(); currentTime=millis();} 
@@ -184,7 +187,8 @@ if(buttonState.right==0)
 
 int SnakeMain(){
   delay(200);  
-  Snake_setup(); 
+  Snake_setup();
+  startFurElise();
   while(!gOver){
    Snake_loop(); 
   }
