@@ -5,10 +5,8 @@
 #include "newGame.h"
 #include "../Setup/common.h"
 #include "snake_sounds.h"
-
 #include "ESP32S3VGA.h"
 #include "GfxWrapper.h"
-
 #include <esp_now.h>
 #include <WiFi.h>
 

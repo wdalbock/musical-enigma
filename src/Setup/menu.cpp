@@ -1,13 +1,19 @@
-#include "../Space_wars/space_wars.h"
+//Games
 #include "../Connect_Four/Connect_Four.h"
 #include "../Snake/Snake.h"
+#include "../FourPlayerPong/fourplayerpong.h"
+
 #include "common.h"
 #include "leaderboard.h"
+
+// SD card
 #include <SD_MMC.h>
 
+// VGA 
 #include "ESP32S3VGA.h"
 #include "GfxWrapper.h"
 
+//ESP Now (wireless controller)
 #include <esp_now.h>
 #include <WiFi.h>
 
@@ -19,12 +25,14 @@ const char* filenameSnake = "/Snake.txt";
 static int snakeLeaderboard[5];
 const char* filenameConnect = "/ConnectFour.txt";
 static int connectLeaderboard[5];
+const char* filenamePong = "/QuadPong.txt";
+static int pongLeaderboard[5];
 
 //                   r,  r, r, r,r,   g, g, g, g, g,g,   b, b, b, b,b,  h, v
 const PinConfig pins(-1,-1,-1,-1,1,  -1,-1,-1,-1,-1,2,  -1,-1,-1,-1,3,  10,11);
 
-const char* games[] = {"Space Wars", "Snake", "Connect Four"}; 
-const char* leaderboardMetrics[] = {"", "Size", "Moves to Win"};
+const char* games[] = {"QuadPong", "Snake", "Connect Four", "Settings"}; 
+const char* leaderboardMetrics[] = {"Collisions", "Size", "Moves to Win"};
 int currentGameIndex = 0; 
 int totalGames = sizeof(games)/ sizeof(games[0]);
 
@@ -59,12 +67,19 @@ void showMainMenu() {
 
         if (i == currentGameIndex){
             gfx.setTextColor(0xFFE0);
-            gfx.print("(A)");
+            if (i != 3) {
+                gfx.print("(A)");
+            }
 
             gfx.setCursor(350, 125 + 32 * i);
             gfx.print(">>");
             gfx.setCursor(375, 125 + 32 * i);
-            gfx.print("Leaderboard");
+
+            if (i == 3) {
+                gfx.print("Clear Leaderboards");
+            } else {
+                gfx.print("Leaderboard");
+            }
         }
         else {
             gfx.setTextColor(0xFFFF); 
@@ -109,10 +124,16 @@ void displayLeaderboard(int gameIndex) {
 
         gfx.setCursor(480, 50 + i * 50);
 
+        int pongval = pongLeaderboard[i-1];
         int snakeval = snakeLeaderboard[i-1];
         int connectval = connectLeaderboard[i-1];
         switch (gameIndex) {
         case 0:
+            if (pongval == 0) {
+                gfx.print("-");
+            } else {
+                gfx.print(pongval);
+            }
             break;
         case 1:
             if (snakeval == 0) {
@@ -144,7 +165,7 @@ void OnDataRecv(const uint8_t * mac_addr, const uint8_t *incomingData, int len) 
   snprintf(macStr, sizeof(macStr), "%02x:%02x:%02x:%02x:%02x:%02x",
            mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
   memcpy(&buttonState, incomingData, sizeof(buttonState));
-  Serial.printf("l: %d, r: %d, u: %d, d: %d, s: %d, b: %d\n", buttonState.left, buttonState.right, buttonState.up, buttonState.down, buttonState.start, buttonState.back);
+  //Serial.printf("l: %d, r: %d, u: %d, d: %d, s: %d, b: %d\n", buttonState.left, buttonState.right, buttonState.up, buttonState.down, buttonState.start, buttonState.back);
 }
 
 void setup() {
@@ -168,6 +189,7 @@ void setup() {
 
     readFile(filenameSnake, snakeLeaderboard);
     readFile(filenameConnect, connectLeaderboard);
+    readFile(filenamePong, pongLeaderboard);
 
     // espnow init
     WiFi.mode(WIFI_STA);
@@ -179,6 +201,7 @@ void setup() {
 }
 
 void loop() {
+    delay(30);
     if (currentState == MENU) {
         static int prevNextState = 1;
         static int prevBackState = 1;
@@ -217,25 +240,59 @@ void loop() {
 
     } else if (currentState == PLAYING) {
         if (currentGameIndex == 0) {
-            //space_warsMain();
+            addDescendingScore(fourplayerpongmain(), pongLeaderboard);
+            writeScores(filenamePong, pongLeaderboard);
+            delay(10);
             currentState = MENU;
 
         } else if (currentGameIndex == 1) { 
-            addSnakeScore(SnakeMain(), snakeLeaderboard);
+            addDescendingScore(SnakeMain(), snakeLeaderboard);
             writeScores(filenameSnake, snakeLeaderboard);
             delay(10);
             currentState = MENU;
 
         } else if (currentGameIndex == 2) {
-            addConnectFourScore(ConnectFourMain(), connectLeaderboard);
+            addAscendingScore(ConnectFourMain(), connectLeaderboard);
             writeScores(filenameConnect, connectLeaderboard);
             delay(10);
             currentState = MENU;
+        } else {
+            currentState = MENU;
         }
     } else if (currentState == LEADERBOARD) {
-        displayLeaderboard(currentGameIndex);
-        if (!buttonState.back) {
+        if (currentGameIndex == 3) {
+
+            vga.clear(vga.rgb(0, 0, 0));
+            gfx.setTextColor(0xFFFF);
+            gfx.setCursor(100, 150);
+            gfx.setTextSize(3);
+            gfx.print("Clearing...");
+            vga.show();
+
+            memset(connectLeaderboard, 0, sizeof(connectLeaderboard));
+            writeScores(filenameConnect, connectLeaderboard);
+            delay(50);
+            memset(pongLeaderboard, 0, sizeof(pongLeaderboard));
+            writeScores(filenamePong, pongLeaderboard);
+            delay(50);
+            memset(snakeLeaderboard, 0, sizeof(snakeLeaderboard));
+            writeScores(filenameSnake, snakeLeaderboard);
+            delay(50);
+            delay(300);
+
+            vga.clear(vga.rgb(0, 0, 0));
+            gfx.setCursor(100, 150);
+            gfx.print("Cleared!");
+            vga.show();
+            delay(600);
+
+            currentGameIndex = 0;
             currentState = MENU;
+        } else {
+            displayLeaderboard(currentGameIndex);
+            if (!buttonState.back) {
+                currentState = MENU;
+            }
         }
     }
 }
