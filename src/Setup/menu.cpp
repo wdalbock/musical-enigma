@@ -25,12 +25,14 @@ const char* filenameSnake = "/Snake.txt";
 static int snakeLeaderboard[5];
 const char* filenameConnect = "/ConnectFour.txt";
 static int connectLeaderboard[5];
+const char* filenamePong = "/QuadPong.txt";
+static int pongLeaderboard[5];
 
 //                   r,  r, r, r,r,   g, g, g, g, g,g,   b, b, b, b,b,  h, v
 const PinConfig pins(-1,-1,-1,-1,1,  -1,-1,-1,-1,-1,2,  -1,-1,-1,-1,3,  10,11);
 
-const char* games[] = {"Four Player Pong", "Snake", "Connect Four"}; 
-const char* leaderboardMetrics[] = {"", "Size", "Moves to Win"};
+const char* games[] = {"QuadPong", "Snake", "Connect Four"}; 
+const char* leaderboardMetrics[] = {"Collisions", "Size", "Moves to Win"};
 int currentGameIndex = 0; 
 int totalGames = sizeof(games)/ sizeof(games[0]);
 
@@ -115,10 +117,16 @@ void displayLeaderboard(int gameIndex) {
 
         gfx.setCursor(480, 50 + i * 50);
 
+        int pongval = pongLeaderboard[i-1];
         int snakeval = snakeLeaderboard[i-1];
         int connectval = connectLeaderboard[i-1];
         switch (gameIndex) {
         case 0:
+            if (pongval == 0) {
+                gfx.print("-");
+            } else {
+                gfx.print(pongval);
+            }
             break;
         case 1:
             if (snakeval == 0) {
@@ -150,7 +158,7 @@ void OnDataRecv(const uint8_t * mac_addr, const uint8_t *incomingData, int len) 
   snprintf(macStr, sizeof(macStr), "%02x:%02x:%02x:%02x:%02x:%02x",
            mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
   memcpy(&buttonState, incomingData, sizeof(buttonState));
-  Serial.printf("l: %d, r: %d, u: %d, d: %d, s: %d, b: %d\n", buttonState.left, buttonState.right, buttonState.up, buttonState.down, buttonState.start, buttonState.back);
+  //Serial.printf("l: %d, r: %d, u: %d, d: %d, s: %d, b: %d\n", buttonState.left, buttonState.right, buttonState.up, buttonState.down, buttonState.start, buttonState.back);
 }
 
 void setup() {
@@ -174,6 +182,7 @@ void setup() {
 
     readFile(filenameSnake, snakeLeaderboard);
     readFile(filenameConnect, connectLeaderboard);
+    readFile(filenamePong, pongLeaderboard);
 
     // espnow init
     WiFi.mode(WIFI_STA);
@@ -224,17 +233,19 @@ void loop() {
 
     } else if (currentState == PLAYING) {
         if (currentGameIndex == 0) {
-            fourplayerpongmain();
+            addDescendingScore(fourplayerpongmain(), pongLeaderboard);
+            writeScores(filenamePong, pongLeaderboard);
+            delay(10);
             currentState = MENU;
 
         } else if (currentGameIndex == 1) { 
-            addSnakeScore(SnakeMain(), snakeLeaderboard);
+            addDescendingScore(SnakeMain(), snakeLeaderboard);
             writeScores(filenameSnake, snakeLeaderboard);
             delay(10);
             currentState = MENU;
 
         } else if (currentGameIndex == 2) {
-            addConnectFourScore(ConnectFourMain(), connectLeaderboard);
+            addAscendingScore(ConnectFourMain(), connectLeaderboard);
             writeScores(filenameConnect, connectLeaderboard);
             delay(10);
             currentState = MENU;
