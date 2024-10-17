@@ -31,7 +31,7 @@ static int pongLeaderboard[5];
 //                   r,  r, r, r,r,   g, g, g, g, g,g,   b, b, b, b,b,  h, v
 const PinConfig pins(-1,-1,-1,-1,1,  -1,-1,-1,-1,-1,2,  -1,-1,-1,-1,3,  10,11);
 
-const char* games[] = {"QuadPong", "Snake", "Connect Four"}; 
+const char* games[] = {"QuadPong", "Snake", "Connect Four", "Settings"}; 
 const char* leaderboardMetrics[] = {"Collisions", "Size", "Moves to Win"};
 int currentGameIndex = 0; 
 int totalGames = sizeof(games)/ sizeof(games[0]);
@@ -67,12 +67,19 @@ void showMainMenu() {
 
         if (i == currentGameIndex){
             gfx.setTextColor(0xFFE0);
-            gfx.print("(A)");
+            if (i != 3) {
+                gfx.print("(A)");
+            }
 
             gfx.setCursor(350, 125 + 32 * i);
             gfx.print(">>");
             gfx.setCursor(375, 125 + 32 * i);
-            gfx.print("Leaderboard");
+
+            if (i == 3) {
+                gfx.print("Clear Leaderboards");
+            } else {
+                gfx.print("Leaderboard");
+            }
         }
         else {
             gfx.setTextColor(0xFFFF); 
@@ -194,7 +201,7 @@ void setup() {
 }
 
 void loop() {
-    delay(10);
+    delay(30);
     if (currentState == MENU) {
         static int prevNextState = 1;
         static int prevBackState = 1;
@@ -249,11 +256,43 @@ void loop() {
             writeScores(filenameConnect, connectLeaderboard);
             delay(10);
             currentState = MENU;
+        } else {
+            currentState = MENU;
         }
     } else if (currentState == LEADERBOARD) {
-        displayLeaderboard(currentGameIndex);
-        if (!buttonState.back) {
+        if (currentGameIndex == 3) {
+
+            vga.clear(vga.rgb(0, 0, 0));
+            gfx.setTextColor(0xFFFF);
+            gfx.setCursor(100, 150);
+            gfx.setTextSize(3);
+            gfx.print("Clearing...");
+            vga.show();
+
+            memset(connectLeaderboard, 0, sizeof(connectLeaderboard));
+            writeScores(filenameConnect, connectLeaderboard);
+            delay(50);
+            memset(pongLeaderboard, 0, sizeof(pongLeaderboard));
+            writeScores(filenamePong, pongLeaderboard);
+            delay(50);
+            memset(snakeLeaderboard, 0, sizeof(snakeLeaderboard));
+            writeScores(filenameSnake, snakeLeaderboard);
+            delay(50);
+            delay(500);
+
+            vga.clear(vga.rgb(0, 0, 0));
+            gfx.setCursor(100, 150);
+            gfx.print("Cleared!");
+            vga.show();
+            delay(1000);
+
+            currentGameIndex = 0;
             currentState = MENU;
+        } else {
+            displayLeaderboard(currentGameIndex);
+            if (!buttonState.back) {
+                currentState = MENU;
+            }
         }
     }
 }

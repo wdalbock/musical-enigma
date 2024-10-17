@@ -58,9 +58,9 @@ void drawBall() {
 }
 
 void drawCollisions() {
-    gfx.setCursor(10, 10);
+    gfx.setCursor(5, 10);
     gfx.setTextColor(TFT_WHITE);
-    gfx.setTextSize(2);
+    gfx.setTextSize(1);
     gfx.printf("Collisions: %d", collisions);
 }
 
@@ -112,44 +112,44 @@ int updateBall() {
     ball.y += ball.dy * ball.speed;
 
     // Check for collisions with the paddles
-    if (ball.y <= 15 && ball.x >= paddles[0].x && ball.x <= paddles[0].x + paddles[0].width) {
+    if (ball.y <= 20 && ball.x >= paddles[0].x && ball.x <= paddles[0].x + paddles[0].width) {
         ball.dy = -ball.dy; // Bounce off the top paddle (player 1) 
-        ball.dx = ball.dx + 2 * isMoving[0] * ((paddles[0].speed * paddleDirection[0])/10); // The speed of the ball is influenced by the current speed/direction of the paddle.
+        ball.dx = ball.dx + 2 * isMoving[0] * ((paddles[0].speed * paddleDirection[0])/10) + (rand() % 3 - 1); // The speed of the ball is influenced by the current speed/direction of the paddle.
         // If isMoving[0] = 0, the ball speed remains the same. 
         collisions++;
         increase = 1;
         playCollisionSound();
     }
 
-    if (ball.y >= 385 && ball.x >= paddles[1].x && ball.x <= paddles[1].x + paddles[1].width) {
+    if (ball.y >= 380 && ball.x >= paddles[1].x && ball.x <= paddles[1].x + paddles[1].width) {
         ball.dy = -ball.dy; 
-        ball.dx = ball.dx + 2 * isMoving[1] * ((paddles[1].speed * paddleDirection[1])/10);
+        ball.dx = ball.dx + 2 * isMoving[1] * ((paddles[1].speed * paddleDirection[1])/10) + (rand() % 3 - 1);
         collisions++;
         increase = 1;
         playCollisionSound();
     }
 
-    if (ball.x <= 105 && ball.y >= paddles[2].y && ball.y <= paddles[2].y + paddles[2].height) {
+    if (ball.x <= 110 && ball.y >= paddles[2].y && ball.y <= paddles[2].y + paddles[2].height) {
         ball.dx = -ball.dx; 
-        ball.dy = ball.dy + 2 * isMoving[2] * ((paddles[2].speed * paddleDirection[2])/10);
+        ball.dy = ball.dy + 2 * isMoving[2] * ((paddles[2].speed * paddleDirection[2])/10) + (rand() % 3 - 1);
         collisions++;
         increase = 1;
         playCollisionSound();
     }
 
-    if (ball.x >= 475 && ball.y >= paddles[3].y && ball.y <= paddles[3].y + paddles[3].height) {
+    if (ball.x >= 470 && ball.y >= paddles[3].y && ball.y <= paddles[3].y + paddles[3].height) {
         ball.dx = -ball.dx;
-        ball.dy = ball.dy + 2 * isMoving[3] * ((paddles[3].speed * paddleDirection[3])/10);
+        ball.dy = ball.dy + 2 * isMoving[3] * ((paddles[3].speed * paddleDirection[3])/10) + (rand() % 3 - 1);
         collisions++;
         increase = 1;
         playCollisionSound();
     }
 
     // Check for collisions with the screen boundaries
-    if (ball.x <= 100 || ball.x >= 480) {
+    if (ball.x <= 95 || ball.x >= 485) {
         return 1;
     }
-    if (ball.y <= 10 || ball.y >= 390) {
+    if (ball.y <= 5 || ball.y >= 395) {
         return 1;
     }
 
