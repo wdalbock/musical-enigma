@@ -278,13 +278,13 @@ void loop() {
             memset(snakeLeaderboard, 0, sizeof(snakeLeaderboard));
             writeScores(filenameSnake, snakeLeaderboard);
             delay(50);
-            delay(500);
+            delay(300);
 
             vga.clear(vga.rgb(0, 0, 0));
             gfx.setCursor(100, 150);
             gfx.print("Cleared!");
             vga.show();
-            delay(1000);
+            delay(600);
 
             currentGameIndex = 0;
             currentState = MENU;
