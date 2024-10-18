@@ -191,6 +191,9 @@ void setup() {
     readFile(filenameConnect, connectLeaderboard);
     readFile(filenamePong, pongLeaderboard);
 
+    pinMode(43, OUTPUT);
+    digitalWrite(43, LOW);
+
     // espnow init
     WiFi.mode(WIFI_STA);
     if (esp_now_init() != ESP_OK) {

@@ -101,6 +101,15 @@ void playCollisionSound() {
   noTone(43);
 }
 
+void playDeathSound() {
+    tone(43, NOTE_A4, 100);
+    noTone(43);
+    tone(43, NOTE_E4, 100);
+    noTone(43); 
+    tone(43, NOTE_D4, 100);
+    noTone(43);
+}
+
 int updateBall() {
     static int increase = 0;
 
@@ -247,6 +256,7 @@ int fourplayerpongmain() {
         }
     }
     displayGameOver();
+    playDeathSound();
     delay(3000);
 
     ball.speed = 2;
